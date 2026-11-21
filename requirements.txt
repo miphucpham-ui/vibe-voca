@@ -1,0 +1,24 @@
+# Core (training, data preparation, inference). Tested with Python 3.12/3.13, torch 2.14 (CUDA 13), Colab T4.
+torch>=2.4
+torchaudio>=2.4
+numpy>=1.26
+scipy>=1.11
+soundfile>=0.12
+librosa>=0.10
+pyarrow>=15
+transformers>=4.40
+huggingface_hub>=0.23
+pyvi==0.1.1
+dizione @ git+https://github.com/n4ze3m/dizione@8cd889e4de7be6bd1dd2e6891344a0729fa14dd4
+
+# Web demo
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2
+
+# Evaluation (PhoWhisper / Whisper through CTranslate2)
+ctranslate2==4.6.0
+faster-whisper==1.2.0
+
+# ONNX export
+onnx>=1.16

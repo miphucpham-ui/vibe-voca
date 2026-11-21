@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vibe-voca</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2" /></svg>
+    </span>
+    <div>
+      <h1>vibe-voca</h1>
+      <p class="sub">Tiếng Việt và tiếng Anh từ tiny-voca</p>
+    </div>
+  </div>
+  <span class="badge" id="checkpoint">đang tải…</span>
+</header>
+
+<main>
+  <section class="card compose">
+    <label for="text" class="label">Văn bản</label>
+    <textarea id="text" rows="4" placeholder="Nhập tiếng Việt có dấu…"></textarea>
+    <div class="chips" id="examples"></div>
+
+    <div class="label">Giọng</div>
+    <div class="voices" id="voices" role="radiogroup"></div>
+
+    <div class="row actions">
+      <label class="check"><input type="checkbox" id="punctuate"><span>Tự thêm dấu câu (vibert-capu)</span></label>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="random">Câu test ngẫu nhiên</button>
+      <button class="btn primary" id="go"><span class="btn-text">Đọc</span><span class="spinner" hidden></span></button>
+    </div>
+
+    <details class="settings">
+      <summary>Tuỳ chỉnh</summary>
+      <div class="grid">
+        <div class="field"><label>Tốc độ <output id="speed-v"></output></label><input type="range" id="speed" min="0.5" max="2" step="0.05" value="1.15"></div>
+        <div class="field"><label>Dịch cao độ (bán cung) <output id="semitones-v"></output></label><input type="range" id="semitones" min="-6" max="6" step="0.5" value="2"></div>
+        <div class="field"><label>Biên độ cao độ <output id="pitch_range-v"></output></label><input type="range" id="pitch_range" min="0" max="2" step="0.05" value="1.15"></div>
+        <div class="field"><label>Nghỉ ở dấu phẩy (ms) <output id="comma_ms-v"></output></label><input type="range" id="comma_ms" min="0" max="600" step="10" value="200"></div>
+        <div class="field"><label>Nghỉ cuối câu (ms) <output id="stop_ms-v"></output></label><input type="range" id="stop_ms" min="0" max="1000" step="10" value="350"></div>
+        <div class="field"><label>Nghỉ giữa các câu (ms) <output id="gap_ms-v"></output></label><input type="range" id="gap_ms" min="0" max="1000" step="10" value="300"></div>
+        <div class="field"><label>Độ sống cao độ <output id="texture-v"></output></label><input type="range" id="texture" min="0" max="1.5" step="0.05" value="0.5"></div>
+        <div class="field small">
+          <label class="check"><input type="checkbox" id="polish" checked><span>Polish</span></label>
+          <label class="inline">Seed <input type="number" id="seed" value="0" step="1"></label>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <div class="error" id="error" hidden></div>
+
+  <section class="card result" id="result" hidden>
+    <div class="player">
+      <audio id="audio" controls></audio>
+      <a class="btn ghost small" id="download" download="vibe_voca.wav">Tải WAV</a>
+    </div>
+    <p class="stats" id="stats"></p>
+    <p class="spoken" id="spoken" hidden></p>
+    <p class="warn" id="unknown" hidden></p>
+
+    <div class="reference" id="reference" hidden>
+      <div class="label">Bản ghi gốc <span id="ref-id" class="mono"></span></div>
+      <audio id="ref-audio" controls></audio>
+    </div>
+
+    <h2>Cao độ <span class="hint">màu theo thanh điệu</span></h2>
+    <div class="legend" id="legend"></div>
+    <div class="plot-wrap"><svg id="plot" role="img" aria-label="Đường cao độ"></svg></div>
+
+    <h2>Âm vị</h2>
+    <div class="phonemes" id="phonemes"></div>
+  </section>
+</main>
+
+<script src="static/app.js"></script>
+</body>
+</html>

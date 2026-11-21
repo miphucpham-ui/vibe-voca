@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vibe-voca"
+version = "0.2.0"
+description = "Vietnamese + English text-to-speech fine-tuned from tiny-voca"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.4",
+    "torchaudio>=2.4",
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "soundfile>=0.12",
+    "librosa>=0.10",
+    "pyarrow>=15",
+    "transformers>=4.40",
+    "huggingface_hub>=0.23",
+    "pyvi==0.1.1",
+    "dizione @ git+https://github.com/n4ze3m/dizione@8cd889e4de7be6bd1dd2e6891344a0729fa14dd4",
+]
+
+[project.optional-dependencies]
+web = ["fastapi>=0.110", "uvicorn>=0.29", "pydantic>=2"]
+eval = ["ctranslate2==4.6.0", "faster-whisper==1.2.0"]
+export = ["onnx>=1.16"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+vibe-voca-speak = "vibe_voca.infer:main"
+vibe-voca-web = "vibe_voca.web.server:main"
+
+[tool.setuptools.packages.find]
+include = ["vibe_voca*"]
+
+[tool.setuptools.package-data]
+"vibe_voca.web" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

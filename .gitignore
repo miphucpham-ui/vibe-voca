@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Large / downloaded / generated (see vibe_voca/paths.py)
+tiny-voca/
+models/
+data/
+work/
+runs/
+logs/
+lexicon/
+samples/
+*.pt
+*.onnx
+*.wav
+*.flac
+*.mp3
+*.mp4
+*.tar
+*.zip
+*.parquet
+
+# Secrets / local
+.env
+.gradio/
