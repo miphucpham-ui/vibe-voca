@@ -1,6 +1,6 @@
 """vibe-voca web demo (FastAPI + plain HTML/CSS/JS).
 
-    python -m vibe_voca.web --checkpoint runs/v2f/step-00032000.pt [--voice vi_female] [--port 7860]
+    python -m vibe_voca.web [--checkpoint runs/main/inference.pt] [--voice vi_female] [--port 7860]   # default: the Hub model
     python -m vibe_voca.web --checkpoint ... --test-set vi_female=work/infore/infore24   # "random test sentence"
 
 In Colab open it with: from google.colab import output; output.serve_kernel_port_as_window(7860)
@@ -32,7 +32,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from ..infer import load_model
+from ..infer import HF_REPO, load_model, pretrained
 from ..paths import VIBERT_CAPU
 from ..synthesis import Settings, syllables, synthesize, tone_spans
 
@@ -153,7 +153,7 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--checkpoint", type=Path, default=os.environ.get("VIBE_VOCA_CHECKPOINT"),
-                        help="inference.pt or a training checkpoint (default: $VIBE_VOCA_CHECKPOINT)")
+                        help=f"inference.pt or a training checkpoint (default: $VIBE_VOCA_CHECKPOINT, else {HF_REPO})")
     parser.add_argument("--voice", help="default voice (default: the model's first)")
     parser.add_argument("--test-set", action="append", default=[], metavar="VOICE=DIR",
                         help="24 kHz set with test.jsonl + audio/ for the 'random test sentence' button (repeatable)")
@@ -161,19 +161,18 @@ def main():
     parser.add_argument("--port", type=int, default=7860)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
-    if not args.checkpoint:
-        parser.error("--checkpoint (or VIBE_VOCA_CHECKPOINT) is required")
-    model = load_model(args.checkpoint, args.device)
+    model = load_model(args.checkpoint, args.device) if args.checkpoint else pretrained(args.device)
     voice = args.voice or model.config.speakers[0]
     if voice not in model.config.speakers:
         parser.error(f"unknown voice {voice!r}; this model has {model.config.speakers}")
     test_sets = dict(item.split("=", 1) for item in args.test_set)
-    STATE.update(model=model, checkpoint=args.checkpoint.name if args.checkpoint.parent.name in ("", ".")
-                 else f"{args.checkpoint.parent.name}/{args.checkpoint.name}",
+    label = HF_REPO if not args.checkpoint else args.checkpoint.name if args.checkpoint.parent.name in ("", ".") \
+        else f"{args.checkpoint.parent.name}/{args.checkpoint.name}"
+    STATE.update(model=model, checkpoint=label,
                  voice=voice, test_sets={k: Path(v) for k, v in test_sets.items()})
     started = time.perf_counter()                 # warm-up: CUDA kernels, polish, the punctuation model if present
     synth(Request(text="Xin chào các bạn.", punctuate=(VIBERT_CAPU / "pytorch_model.bin").exists()))
-    print(f"vibe-voca web: {args.checkpoint} on {args.device} (warm-up {time.perf_counter() - started:.1f} s), "
+    print(f"vibe-voca web: {label} on {args.device} (warm-up {time.perf_counter() - started:.1f} s), "
           f"http://localhost:{args.port}", flush=True)
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
 

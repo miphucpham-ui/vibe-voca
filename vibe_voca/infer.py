@@ -1,10 +1,10 @@
 # Adapted from tiny-voca (Muhammed Nazeem, commit 28e0722) src/tiny_voca/infer.py, via Alpa (77ethers/alpa); Apache-2.0,
 # see LICENSES/Apache-2.0.txt and THIRD_PARTY_NOTICES.md. Modified for vibe-voca.
 
-"""Text -> speech from a vibe-voca checkpoint.
+"""Text -> speech from a vibe-voca checkpoint (default: the published model on the Hugging Face Hub).
 
-    python -m vibe_voca.infer --checkpoint runs/v2f/step-00032000.pt --voice vi_female \\
-        --text "Xin chào, tôi là trợ lý ảo tiếng Việt." --output out.wav
+    python -m vibe_voca.infer --voice vi_female --text "Xin chào, tôi là trợ lý ảo tiếng Việt." --output out.wav
+    python -m vibe_voca.infer --checkpoint runs/main/inference.pt --voice vi_female --text "..." --output out.wav
 """
 
 import argparse
@@ -15,6 +15,9 @@ import torch
 from .config import CHECKPOINT_FORMAT, Config
 from .model import VibeVoca, Polish
 from .text import frontend_words, phonemize
+
+HF_REPO = "PhucMinh111/vibe-voca"       # published model (inference export of v2f step 32000)
+HF_FILE = "vibe-voca.pt"
 
 
 def load_model(path, device="cpu"):
@@ -34,6 +37,14 @@ def load_model(path, device="cpu"):
     model.frontend_words = frontend_words(frontend["fingerprint"] if isinstance(frontend, dict) else frontend)
     model.step = int(state.get("step", 0))
     return model.to(device).eval()
+
+
+def pretrained(device="cpu", repo_id=HF_REPO, filename=HF_FILE, revision=None, token=None):
+    """The published model from the Hugging Face Hub, downloaded once and cached. A private repository needs a
+    token (``token=``, ``HF_TOKEN`` or ``hf auth login``)."""
+    from huggingface_hub import hf_hub_download
+
+    return load_model(hf_hub_download(repo_id, filename, revision=revision, token=token), device)
 
 
 def speak(model, text, voice, speed=1.0, pitch_shift=0.0, seed=0, pitch_range=1.0, polish=Polish(), pauses=None):
@@ -93,7 +104,7 @@ def main():
     from .synthesis import Settings, synthesize
 
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--checkpoint", type=Path, help=f"inference.pt or a training checkpoint (default: {HF_REPO} from the Hub)")
     parser.add_argument("--text", required=True, help="any length: split into sentences at . ? ! and line breaks")
     parser.add_argument("--voice", help="one of the model's voices (default: its first)")
     parser.add_argument("--output", type=Path, required=True)
@@ -107,11 +118,11 @@ def main():
     parser.add_argument("--gap-ms", type=float, default=300, help="pause between sentences")
     parser.add_argument("--punctuate", action="store_true", help="restore punctuation first (needs vibert-capu)")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
     import soundfile as sf
 
-    model = load_model(args.checkpoint, args.device)
+    model = load_model(args.checkpoint, args.device) if args.checkpoint else pretrained(args.device)
     settings = Settings(speed=args.speed, semitones=args.semitones, pitch_range=args.pitch_range, seed=args.seed,
                         polish=not args.plain, texture=args.texture,
                         comma_ms=args.comma_ms, stop_ms=args.stop_ms, gap_ms=args.gap_ms, punctuate=args.punctuate)
